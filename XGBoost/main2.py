@@ -32,26 +32,19 @@ dtreino = xgb.DMatrix(X_treino, y_treino, enable_categorical=True)
 dteste = xgb.DMatrix(X_teste, y_teste, enable_categorical=True)
 
 params = {'objective' : 'reg:squarederror'}
-
-# Treinamento do modelo
-modelo = xgb.train(
-    params=params,
-    dtrain=dtreino,
-    # Setando o numero de arvores que vão ser criadas. O XGBoost vai adequando os ultimos resultados
-    num_boost_round=100
-)
-
-preds = modelo.predict(dteste)
-
-mse = mean_squared_error(dteste.get_label(), preds)
-rmse = math.sqrt(mse)
-print(f'RMSE: {rmse:.2f}')
-
-xgb.plot_importance(modelo)
-plt.grid(False)
-# plt.show()
-
 # Padronizando o numero de arvores de regreção a floresta aleatoria do XGBoost vai ter
-n = 100
+n = 1000
 
 # Comparando o treino com o teste
+# Como o XGBoost funciona na base de floresta aeatoria, mas com a diferença que, ele vai melhorando a performance de acordo com a execução
+evals = [(dtreino, 'treino'), (dteste, 'validacao')]
+modelo = xgb.train(
+    params=params,
+    dtrain = dtreino,
+    num_boost_round = n,
+    evals = evals,
+    # O parametro abaixo, serve pra exibir os valores a cada 10
+    # verbose_eval = 10,
+    # Aqui estou adicionando um parametro que faz com que a criação de arvores de regreção sejam interrompidas, caso o nivel de melhora não seja tão significativo. Essa função interrompe de forma aleatoria, quando o que eu disse for identificado
+    early_stopping_rounds = 10
+)
